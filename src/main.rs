@@ -167,11 +167,25 @@ fn main() {
         .unwrap()
 );
 
+println!("WINDOW CREATED");
+println!("{:?}", window.inner_size());
+
+window.set_title("BLACK HOLE TEST");
+window.set_visible(true);
+window.set_minimized(false);
+window.request_redraw();
+
 
     let mut state =
     pollster::block_on(
         State::new(&window)
     );
+
+    println!("RENDERER READY");
+
+    std::thread::sleep(
+    std::time::Duration::from_secs(5)
+);
 
     let window_clone = window.clone();
 
