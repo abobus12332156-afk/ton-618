@@ -1,10 +1,50 @@
-mod app;
+mod engine;
 
-mod renderer;
-mod blackhole;
-mod world;
-mod wallpaper;
+use engine::image_view::ImageViews;
+use engine::swapchain::*;
+use engine::window::AppWindow;
 
 fn main() {
-    app::run();
+    println!("TON-618 Renderer");
+
+    let app = AppWindow::new();
+
+    let vulkan = engine::device::VulkanDevice::new(&app.window);
+
+    vulkan.check_surface_support();
+    vulkan.print_surface_capabilities();
+    vulkan.print_surface_formats();
+    vulkan.print_present_modes();
+
+    let swapchain = Swapchain::new(
+        &vulkan.instance,
+        &vulkan.device,
+        vulkan.physical_device,
+        &vulkan.surface_loader,
+        vulkan.surface,
+        &app.window,
+        vulkan.graphics_queue_family,
+    );
+
+    let image_views = ImageViews::new(&vulkan.device, &swapchain.images, swapchain.format);
+
+    let render_pass = engine::render_pass::RenderPass::new(&vulkan.device, swapchain.format);
+
+    println!("Starting event loop");
+
+    app.event_loop
+        .run(move |event, window_target| match event {
+            winit::event::Event::WindowEvent {
+                event: winit::event::WindowEvent::CloseRequested,
+                ..
+            } => {
+                println!("Closing");
+                window_target.exit();
+            }
+
+            event => {
+                println!("{event:#?}");
+            }
+        })
+        .expect("Event loop failed");
 }
