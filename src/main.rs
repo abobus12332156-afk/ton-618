@@ -30,6 +30,27 @@ fn main() {
 
     let render_pass = engine::render_pass::RenderPass::new(&vulkan.device, swapchain.format);
 
+    let framebuffers = engine::framebuffer::Framebuffers::new(
+        &vulkan.device,
+        render_pass.render_pass,
+        &image_views.views,
+        swapchain.extent,
+    );
+
+    let pipeline = engine::pipeline::GraphicsPipeline::new(
+        &vulkan.device,
+        render_pass.render_pass,
+        swapchain.extent,
+    );
+
+    vulkan.record_command_buffer(
+        vulkan.command_buffer,
+        render_pass.render_pass,
+        framebuffers.framebuffers[0],
+        swapchain.extent,
+        pipeline.pipeline,
+    );
+
     println!("Starting event loop");
 
     app.event_loop

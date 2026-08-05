@@ -2,6 +2,8 @@ use ash::vk::{self};
 
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
+use crate::engine::render_pass;
+
 pub struct VulkanDevice {
     pub entry: ash::Entry,
     pub instance: ash::Instance,
@@ -269,6 +271,72 @@ impl VulkanDevice {
         for mode in modes {
             println!("{:?}", mode);
         }
+    }
+
+    pub fn record_command_buffer(
+        &self,
+        command_buffer: vk::CommandBuffer,
+        render_pass: vk::RenderPass,
+        framebuffer: vk::Framebuffer,
+        extent: vk::Extent2D,
+        pipeline: vk::Pipeline,
+    ) {
+        let begin_info = vk::CommandBufferBeginInfo::default();
+
+        unsafe {
+            self.device
+                .begin_command_buffer(command_buffer, &begin_info)
+                .unwrap();
+        }
+
+        let clear = vk::ClearValue {
+            color: vk::ClearColorValue {
+                float32: [0.02, 0.02, 0.03, 1.0],
+            },
+        };
+
+        let render_pass_info = vk::RenderPassBeginInfo::default()
+            .render_pass(render_pass)
+            .framebuffer(framebuffer)
+            .render_area(
+                vk::Rect2D::default()
+                    .offset(vk::Offset2D { x: 0, y: 0 })
+                    .extent(extent),
+            )
+            .clear_values(std::slice::from_ref(&clear));
+
+        unsafe {
+            self.device.cmd_begin_render_pass(
+                command_buffer,
+                &render_pass_info,
+                vk::SubpassContents::INLINE,
+            );
+        }
+
+        unsafe {
+            self.device.cmd_bind_pipeline(
+                command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                pipeline,
+            );
+        }
+
+        unsafe {
+            self.device.cmd_draw(command_buffer, 3, 1, 0, 0);
+        }
+
+        println!("Triangle drawn");
+
+        unsafe {
+            self.device.cmd_end_render_pass(command_buffer);
+        }
+        println!("Render pass ended");
+
+        unsafe {
+            self.device.end_command_buffer(command_buffer).unwrap();
+        }
+
+        println!("Command buffer ended");
     }
 
     /*

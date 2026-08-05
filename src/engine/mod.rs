@@ -1,9 +1,12 @@
 pub mod app;
 pub mod commands;
 pub mod device;
+pub mod framebuffer;
 pub mod image_view;
+pub mod pipeline;
 pub mod render_pass;
 pub mod renderer;
+pub mod shader;
 pub mod swapchain;
 pub mod sync;
 pub mod window;
