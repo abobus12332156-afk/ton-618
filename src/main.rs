@@ -4,6 +4,8 @@ use engine::image_view::ImageViews;
 use engine::swapchain::*;
 use engine::window::AppWindow;
 
+use crate::engine::renderer::Renderer;
+
 fn main() {
     println!("TON-618 Renderer");
 
@@ -51,6 +53,19 @@ fn main() {
         pipeline.pipeline,
     );
 
+    vulkan.submit_commands();
+
+    let renderer = Renderer;
+    renderer.draw_frame(
+        &vulkan,
+        &swapchain.loader,
+        swapchain.swapchain,
+        vulkan.command_buffer,
+        render_pass.render_pass,
+        &framebuffers.framebuffers,
+        swapchain.extent,
+        pipeline.pipeline,
+    );
     println!("Starting event loop");
 
     app.event_loop
