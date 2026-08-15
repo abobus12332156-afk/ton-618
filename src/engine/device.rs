@@ -16,6 +16,7 @@ pub struct VulkanDevice {
     pub command_buffer_recording: bool,
     pub fence: vk::Fence,
     pub semaphore: vk::Semaphore,
+    pub render_finished_semaphore: vk::Semaphore,
     pub surface: vk::SurfaceKHR,
     pub surface_loader: ash::khr::surface::Instance,
 }
@@ -125,25 +126,16 @@ impl VulkanDevice {
                 .allocate_command_buffers(&allocate_info)
                 .expect("Failed to allocate command buffer")[0]
         };
+
+        unsafe {
+            device
+                .reset_command_buffer(command_buffer, vk::CommandBufferResetFlags::empty())
+                .expect("Failed to reset command buffer");
+        }
+
         println!("Command buffer allocated");
 
         let begin_info = vk::CommandBufferBeginInfo::default();
-
-        unsafe {
-            device
-                .begin_command_buffer(command_buffer, &begin_info)
-                .expect("Failed to begin command buffer");
-        }
-
-        println!("Command buffer recording started");
-
-        unsafe {
-            device
-                .end_command_buffer(command_buffer)
-                .expect("Failed to end command buffer")
-        }
-
-        println!("Command buffer recording finished");
 
         let fence_info = vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
 
@@ -164,6 +156,14 @@ impl VulkanDevice {
         };
 
         println!("Semaphore created");
+
+        let render_finished_semaphore = unsafe {
+            device
+                .create_semaphore(&semaphore_info, None)
+                .expect("Failed to create render finished semaphore")
+        };
+
+        println!("Render finished semaphore");
 
         let surface = unsafe {
             ash_window::create_surface(
@@ -192,6 +192,7 @@ impl VulkanDevice {
             command_buffer_recording: false,
             fence,
             semaphore,
+            render_finished_semaphore,
         }
     }
 
@@ -204,6 +205,12 @@ impl VulkanDevice {
 
         unsafe {
             self.device
+                .reset_fences(std::slice::from_ref(&self.fence))
+                .expect("Failed to reset fence");
+        }
+
+        unsafe {
+            self.device
                 .queue_submit(
                     self.graphics_queue,
                     std::slice::from_ref(&submit_info),
@@ -211,6 +218,14 @@ impl VulkanDevice {
                 )
                 .expect("Failed to submit command buffer");
         }
+
+        unsafe {
+            self.device
+                .wait_for_fences(std::slice::from_ref(&self.fence), true, u64::MAX)
+                .expect("Failed to wait for fence");
+        }
+
+        println!("GPU finished rendering");
 
         println!("Command buffer submitted");
     }

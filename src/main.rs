@@ -45,27 +45,8 @@ fn main() {
         swapchain.extent,
     );
 
-    vulkan.record_command_buffer(
-        vulkan.command_buffer,
-        render_pass.render_pass,
-        framebuffers.framebuffers[0],
-        swapchain.extent,
-        pipeline.pipeline,
-    );
-
-    vulkan.submit_commands();
-
     let renderer = Renderer;
-    renderer.draw_frame(
-        &vulkan,
-        &swapchain.loader,
-        swapchain.swapchain,
-        vulkan.command_buffer,
-        render_pass.render_pass,
-        &framebuffers.framebuffers,
-        swapchain.extent,
-        pipeline.pipeline,
-    );
+
     println!("Starting event loop");
 
     app.event_loop
@@ -78,9 +59,20 @@ fn main() {
                 window_target.exit();
             }
 
-            event => {
-                println!("{event:#?}");
+            winit::event::Event::AboutToWait => {
+                renderer.draw_frame(
+                    &vulkan,
+                    &swapchain.loader,
+                    swapchain.swapchain,
+                    vulkan.command_buffer,
+                    render_pass.render_pass,
+                    &framebuffers.framebuffers,
+                    swapchain.extent,
+                    pipeline.pipeline,
+                );
             }
+
+            _ => {}
         })
         .expect("Event loop failed");
 }

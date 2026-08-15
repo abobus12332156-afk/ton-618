@@ -10,3 +10,4 @@ pub mod shader;
 pub mod swapchain;
 pub mod sync;
 pub mod window;
+mod physics;

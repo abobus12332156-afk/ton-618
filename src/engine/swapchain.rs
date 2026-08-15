@@ -46,6 +46,18 @@ impl Swapchain {
         }
     }
 
+    pub fn acquire_next_image(&self, semaphore: vk::Semaphore) -> u32 {
+        let (image_index, _) = unsafe {
+            self.loader
+                .acquire_next_image(self.swapchain, u64::MAX, semaphore, vk::Fence::null())
+                .expect("Failed To acquire swapchain image")
+        };
+
+        println!("Acquired image {}", image_index);
+
+        image_index
+    }
+
     pub fn new(
         instance: &ash::Instance,
         device: &ash::Device,
