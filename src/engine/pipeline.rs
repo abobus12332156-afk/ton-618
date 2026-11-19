@@ -10,7 +10,13 @@ pub struct GraphicsPipeline {
 
 impl GraphicsPipeline {
     pub fn new(device: &ash::Device, render_pass: vk::RenderPass, extent: vk::Extent2D) -> Self {
-        let layout_info = vk::PipelineLayoutCreateInfo::default();
+        let push_constant_range = vk::PushConstantRange::default()
+            .stage_flags(vk::ShaderStageFlags::FRAGMENT)
+            .offset(0)
+            .size(std::mem::size_of::<[f32; 4]>() as u32);
+
+        let layout_info = vk::PipelineLayoutCreateInfo::default()
+            .push_constant_ranges(std::slice::from_ref(&push_constant_range));
 
         let layout = unsafe {
             device
@@ -20,9 +26,9 @@ impl GraphicsPipeline {
 
         println!("Pipeline layout created");
 
-        let vertex_shader = ShaderModule::new(device, "src/shaders/triangle.vert.spv");
+        let vertex_shader = ShaderModule::new(device, "src/shaders/blackhole.vert.spv");
 
-        let fragment_shader = ShaderModule::new(device, "src/shaders/triangle.frag.spv");
+        let fragment_shader = ShaderModule::new(device, "src/shaders/blackhole.frag.spv");
 
         let entry_point = CString::new("main").unwrap();
 

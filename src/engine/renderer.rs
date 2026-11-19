@@ -1,6 +1,5 @@
 use crate::engine::device::VulkanDevice;
 use ash::vk;
-use std::slice;
 
 pub struct Renderer;
 
@@ -12,6 +11,8 @@ impl Renderer {
         framebuffer: vk::Framebuffer,
         extent: vk::Extent2D,
         pipeline: vk::Pipeline,
+        pipeline_layout: vk::PipelineLayout,
+        time: f32,
     ) {
         let begin_info = vk::CommandBufferBeginInfo::default();
 
@@ -44,8 +45,24 @@ impl Renderer {
                 vk::SubpassContents::INLINE,
             );
 
+            let resolution = [extent.width as f32, extent.height as f32];
+            let push_constants = [extent.width as f32, extent.height as f32, time, 0.0];
+
+            let push_constant_bytes = std::slice::from_raw_parts(
+                push_constants.as_ptr() as *const u8,
+                std::mem::size_of_val(&push_constants),
+            );
+
+            device.cmd_push_constants(
+                command_buffer,
+                pipeline_layout,
+                vk::ShaderStageFlags::FRAGMENT,
+                0,
+                push_constant_bytes,
+            );
+
             device.cmd_bind_pipeline(command_buffer, vk::PipelineBindPoint::GRAPHICS, pipeline);
-            device.cmd_draw(command_buffer, 3, 1, 0, 0);
+            device.cmd_draw(command_buffer, 6, 1, 0, 0);
             device.cmd_end_render_pass(command_buffer);
             device.end_command_buffer(command_buffer).unwrap();
         }
@@ -61,6 +78,8 @@ impl Renderer {
         framebuffers: &[vk::Framebuffer],
         extent: vk::Extent2D,
         pipeline: vk::Pipeline,
+        pipeline_layout: vk::PipelineLayout,
+        time: f32,
     ) {
         unsafe {
             vulkan
@@ -90,6 +109,8 @@ impl Renderer {
             framebuffer,
             extent,
             pipeline,
+            pipeline_layout,
+            time,
         );
 
         println!("Image acquired: {}", image_index);
